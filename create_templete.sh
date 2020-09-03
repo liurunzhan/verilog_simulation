@@ -12,7 +12,7 @@ fi
 
 if [ -d ${root} ]
 then
-  echo "project directory has alread existed!"
+  echo "project directory ${root} has alread existed!"
   echo "please remove or rename it or define a new project name"
   exit 1
 fi
@@ -73,17 +73,17 @@ always @(*)
   begin
     if(!sysrstn)
         rstn = 1'b0;
-		else
+    else
         rstn = #RST_START 1'b1;
   end
 	
 always @(*)
   begin
     if(!rstn)
-			  clk = 1'b0;
-		else
-			  clk = #CLK_START ~clk;
-	end
+        clk = 1'b0;
+    else
+        clk = #CLK_START ~clk;
+  end
 
 ${root} u_${root} (
   .rstn (rst_n),
@@ -96,7 +96,7 @@ initial
     sysrstn = 1'b0;
     #SYSRST_START sysrstn = 1'b1;
     #SYSRST_END sysrstn = 1'b0;
-	end
+  end
 	
 initial
   begin
