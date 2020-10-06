@@ -1,9 +1,0 @@
-#!/bin/sh
-
-rm -f mainsim mainsim.vcd mainsim.lxt
-list=`cat filelist`
-iverilog -g2012 -o mainsim mainsim.v $list
-vvp -n mainsim -lxt2
-cp mainsim.vcd mainsim.lxt
-gtkwave mainsim.lxt
-

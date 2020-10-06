@@ -3,6 +3,7 @@
 root=$1
 sim_dir=${root}/sim
 src_dir=${root}/src
+tool_dir=${root}/tool
 
 if test -z "$root"
 then
@@ -20,6 +21,59 @@ fi
 mkdir -p ${root}
 mkdir -p ${sim_dir}
 mkdir -p ${src_dir}
+mkdir -p ${tool_dir}
+
+# go to tool directory
+cd ${tool_dir}
+
+# clone repository of iverilog and install it
+if [ -z `which iverilog` ]; then
+  git clone --recursive https://github.com/steveicarus/iverilog iverilog
+  cd iverilog
+  ./autoconf.sh
+  ./configure
+  make
+  sudo make install
+  cd ..
+fi
+
+if [ -z `which iverilog` ]; then
+  echo "verilog compiler is not installed or found!"
+  exit 1
+fi
+
+# clone repository of gtkwave and install it
+if [ -z `which gtkwave` ]; then
+  git clone --recursive https://github.com/gtkwave/gtkwave gtkwave
+  cd gtkwave/gtkwave3
+  ./configure
+  make
+  sudo make install
+  cd ../..
+fi
+
+if [ -z `which gtkwave` ]; then
+  echo "wave debug software is not installed or found!"
+  exit 1
+fi
+
+# clone repository of yosys and install it
+if [ -z `which yosys` ]; then
+  git clone --recursive https://github.com/YosysHQ/yosys yosys
+  cd yosys
+  make config-gcc
+  make
+  sudo make install
+  cd ..
+fi
+
+if [ -z `which yosys` ]; then
+  echo "synthesis software is not installed or found!"
+  exit 1
+fi
+
+# back to root directory
+cd ../.. 
 
 # create Makefile in simulation directory
 echo ".PHONY: all clean
