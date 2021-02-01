@@ -1,10 +1,14 @@
 #!/usr/bin/perl -w
 
-## AUTHOR   : Liu Runzhan
-## DATE     : 2021-01-27
-## VERSION  : 1.1
-## LICENSE  : GPL 3.0
-## FUNCTION : generate file list
+## AUTHOR      : liurunzhan
+## DATE        : 2021-02-01
+## VERSION     : 1.1
+## LICENSE     : GPL 3.0
+## FUNCTION    : filelist generator
+## DESCRIPTION : 1. generate file list of Verilog file(*.v) or System Verilog file (*.sv)
+##             : from a given directory, which can be used in simulation and synthesis.
+##             : 2. each subdirectory is considered as a ip made from different modules,
+##             : occupying a individual block in the file list.
 
 use strict;
 use warnings;
@@ -286,27 +290,27 @@ sub walk_dir
   my @dirs = ();
   foreach my $subdir (@subdirs)
   {
-	# relative path
-	if(($subdir !~ /^\./) && (!exists($uncover{$subdir})))
+    # relative path
+    if(($subdir !~ /^\./) && (!exists($uncover{$subdir})))
     {
       my $path = File::Spec->catdir($dir, $subdir);
       if(-d $path)
       { push(@dirs, $path); }
       elsif((-f $path) && ($path =~ /\.s?v$/))
       {
-	    if(!exists($$hash{$dir}))
-		{
-		  $$hash{$dir} = 
-		  {
-		    "incdir"     => $FALSE,
-		    "module"     => [],
-		    "definition" => [],
-		    "class"      => [],
-		    "task"       => [],
-		    "function"   => [],
-		    "interface"  => [],
-		  };
-		}
+        if(!exists($$hash{$dir}))
+        {
+          $$hash{$dir} = 
+          {
+            "incdir"     => $FALSE,
+            "module"     => [],
+            "definition" => [],
+            "class"      => [],
+            "task"       => [],
+            "function"   => [],
+            "interface"  => [],
+          };
+        }
         if(judge_file_is_module($path))
         { push(@{$$hash{$dir}{"module"}}, $subdir); }
         elsif(judge_file_is_definition($path))
@@ -389,38 +393,38 @@ sub write_filelist
   foreach my $path (sort{$a cmp $b} keys %{$hash})
   {
     print $fout "\n// $path\n";
-	if($$hash{$path}{"incdir"} == $TRUE)
-	{ print $fout "+incdir+$path\n"; }
+    if($$hash{$path}{"incdir"} == $TRUE)
+    { print $fout "+incdir+$path\n"; }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"definition"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print $fout "$tmp\n";
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print $fout "$tmp\n";
+    }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"module"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print $fout "$tmp\n";
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print $fout "$tmp\n";
+    }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"class"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print $fout "$tmp\n";
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print $fout "$tmp\n";
+    }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"task"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print $fout "$tmp\n";
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print $fout "$tmp\n";
+    }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"function"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print $fout "$tmp\n";
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print $fout "$tmp\n";
+    }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"interface"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print $fout "$tmp\n";
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print $fout "$tmp\n";
+    }
   }
   close($fout);
   print("writing done!\n");
@@ -438,38 +442,38 @@ sub print_filelist
   foreach my $path (sort{$a cmp $b} keys %{$hash})
   {
     print("\n// $path\n");
-	if($$hash{$path}{"incdir"} == $TRUE)
-	{ print("+incdir+$path\n"); }
+    if($$hash{$path}{"incdir"} == $TRUE)
+    { print("+incdir+$path\n"); }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"definition"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print("$tmp\n");
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print("$tmp\n");
+    }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"module"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print("$tmp\n");
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print("$tmp\n");
+    }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"class"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print("$tmp\n");
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print("$tmp\n");
+    }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"task"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print("$tmp\n");
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print("$tmp\n");
+    }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"function"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print("$tmp\n");
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print("$tmp\n");
+    }
     foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"interface"}})
     {
-	  my $tmp = File::Spec->catfile($path, $subpath);
-	  print("$tmp\n");
-	}
+      my $tmp = File::Spec->catfile($path, $subpath);
+      print("$tmp\n");
+    }
   }
   print("\nprinting done!\n");
 }
