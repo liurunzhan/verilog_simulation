@@ -1,49 +1,13 @@
 #!/bin/sh
 
-if $# > 0; then
-  echo "$1 $2"
-  case $1 in
-  "install")
-    root=$1
-    tool_dir=${root}/tool
-    echo "${root}"
-    case $2 in
-      iverilog)
-        install_iverilog ${tool_dir}
-        ;;
-      gtkwave)
-        install_gtkwave ${tool_dir}
-        ;;
-      yosys)
-        install_yosys ${tool_dir}
-        ;;
-      *)
-        install_iverilog ${tool_dir}
-        install_gtkwave ${tool_dir}
-        install_yosys ${tool_dir}
-        ;;
-    esac
-    ;;
-  create)
-    echo "create"
-    ;;
-  clean)
-    echo "clean"
-    ;;
-  help)
-     
-    ;;
-  *)
-     
-    ;;
-  esac   
-fi
+# This is a script to install tools and manage simulation project
 
 # go to tool directory
 # clone repository of iverilog and install it
 function install_iverilog() {
-  tool_dir = $1
-  if ! -d {tool_dir}; then
+  tool_dir=$1
+  
+  if [ ! -d {tool_dir} ]; then
     mkdir -p ${tool_dir}
   fi
   
@@ -70,9 +34,11 @@ function install_iverilog() {
 # clone repository of gtkwave and install it
 function isntall_gtkwave() {
   tool_dir=$1
-  if ! -d {tool_dir}; then
+  
+  if [ ! -d {tool_dir} ]; then
     mkdir -p ${tool_dir}
   fi
+  
   if [ -z `which gtkwave` ]; then
     cd ${tool_dir}
     git clone --recursive https://github.com/gtkwave/gtkwave gtkwave
@@ -95,7 +61,8 @@ function isntall_gtkwave() {
 # clone repository of yosys and install it
 function install_yosys() {
   tool_dir=$1
-  if ! -d {tool_dir}; then
+  
+  if [ ! -d {tool_dir} ]; then
     mkdir -p ${tool_dir}
   fi
 
@@ -118,11 +85,11 @@ function install_yosys() {
 }
 
 function create_project() {
-  tool_dir=$1
+  root=$1
   sim_dir=${root}/sim
   src_dir=${root}/src
   
-  if test -z "$root"; then
+  if [ -z ${root} ]; then
     echo "project name cannot be empty!"
     exit 1
   fi
@@ -136,11 +103,11 @@ function create_project() {
   mkdir -p ${root}
   mkdir -p ${sim_dir}
   mkdir -p ${src_dir}
-  mkdir -p ${tool_dir}
   # create Makefile in simulation directory
   echo ".PHONY: all clean
 all:
 	./run
+
 clean:
 	-rm -rf ../../${root}
 " > ${sim_dir}/Makefile
@@ -150,7 +117,7 @@ clean:
 
 rm -f mainsim mainsim.vcd mainsim.lxt
 list=\`cat filelist\`
-iverilog -g2012 -o mainsim mainsim.v \$list
+iverilog -s dut -g2012 -o mainsim mainsim.v \$list
 vvp -n mainsim -lxt2
 cp mainsim.vcd mainsim.lxt
 gtkwave mainsim.lxt
@@ -173,7 +140,7 @@ endmodule
   # create top file in simulation directory
   echo "\`timescale 1ns/1ns
 
-module top();
+module dut();
 	
 reg sysrstn;
 reg rstn;
@@ -223,3 +190,50 @@ initial
 endmodule
 " > ${sim_dir}/mainsim.v
 }
+
+if [ $# -eq 0 ]; then
+  echo "$0 help to get all supported command line arguments"
+  exit 1
+fi
+
+case $1 in
+"install")
+  root=./tool
+  echo "install TOOL $2 in DIRECTORY ${root}"
+  case $2 in
+    "iverilog")
+  	install_iverilog ${root}
+  	;;
+    "gtkwave")
+  	install_gtkwave ${root}
+  	;;
+    "yosys")
+  	install_yosys ${root}
+  	;;
+    *)
+  	install_iverilog ${root}
+  	install_gtkwave ${root}
+  	install_yosys ${root}
+  	;;
+  esac
+  ;;
+"create")
+  echo "create PROJECT $2"
+  create_project $2
+  ;;
+  "clean")
+  echo "clean PROJECT $2"
+  if [ -d $2 ]; then
+    rm -rf $2
+  fi
+  ;;
+"help")
+  echo "$0 install iverilog/gtkwave/yosys"
+  echo "$0 create project"
+  echo "$0 clean project"
+  echo "$0 help"
+  ;;
+*)
+  echo "$0 help to get all supported command line arguments"
+  ;;
+esac

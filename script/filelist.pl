@@ -118,16 +118,16 @@ sub cmd_print
 {
   my ($cmds) = @_;
   print("CONFIGURATIONS ARE : \n");
-  print("work            => ", $cmds{"work"},                                       "\n");
+  print("work            => ", $cmds{"work"}, "\n");
   print("uncover         => ", join(":", sort{$a cmp $b} keys %{$cmds{"uncover"}}), "\n");
-  print("with_definition => ", $cmds{"with_definition"} == 0 ? "FALSE" : "TRUE",    "\n");
-  print("with_class      => ", $cmds{"with_class"}      == 0 ? "FALSE" : "TRUE",    "\n");
-  print("with_task       => ", $cmds{"with_task"}       == 0 ? "FALSE" : "TRUE",    "\n");
-  print("with_function   => ", $cmds{"with_function"}   == 0 ? "FALSE" : "TRUE",    "\n");
-  print("with_interface  => ", $cmds{"with_interface"}  == 0 ? "FALSE" : "TRUE",    "\n");
-  print("output          => ", $cmds{"output"},                                     "\n");
-  print("print           => ", $cmds{"print"}           == 0 ? "FALSE" : "TRUE",    "\n");
-  print("with_help       => ", $cmds{"with_help"}       == 0 ? "FALSE" : "TRUE",    "\n\n");
+  print("with_definition => ", $cmds{"with_definition"} == 0 ? "FALSE" : "TRUE", "\n");
+  print("with_class      => ", $cmds{"with_class"} == 0 ? "FALSE" : "TRUE", "\n");
+  print("with_task       => ", $cmds{"with_task"} == 0 ? "FALSE" : "TRUE", "\n");
+  print("with_function   => ", $cmds{"with_function"} == 0 ? "FALSE" : "TRUE", "\n");
+  print("with_interface  => ", $cmds{"with_interface"} == 0 ? "FALSE" : "TRUE", "\n");
+  print("output          => ", $cmds{"output"}, "\n");
+  print("print           => ", $cmds{"print"}  == 0 ? "FALSE" : "TRUE", "\n");
+  print("with_help       => ", $cmds{"with_help"} == 0 ? "FALSE" : "TRUE","\n\n");
 }
 
 sub help_print
