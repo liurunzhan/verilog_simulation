@@ -112,7 +112,6 @@ def create_case(args):
         with open(path, "w") as fout:
           fout.write(template)
 
-
 def delete_case(args):
   print("delete CASE %s" % args.case)
   path = os.path.join(args.root, args.case)

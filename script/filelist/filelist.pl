@@ -5,7 +5,7 @@
 ## VERSION     : 1.1
 ## LICENSE     : GPL 3.0
 ## FUNCTION    : filelist generator
-## DESCRIPTION : 1. generate file list of Verilog file(*.v) or System Verilog file (*.sv)
+## DESCRIPTION : 1. generate file list of Verilog file(*.v/*.vh) or System Verilog file (*.sv/*.svh)
 ##             : from a given directory, which can be used in simulation and synthesis.
 ##             : 2. each subdirectory is considered as a ip made from different modules,
 ##             : occupying a individual block in the file list.
@@ -26,8 +26,7 @@ my $FALSE = 0;
 # parse command lines
 my %cmds = %{cmd_parser()};
 
-if($cmds{"with_help"})
-{
+if($cmds{"with_help"}) {
   help_print();
   exit(0);
 }
@@ -36,12 +35,14 @@ cmd_print(\%cmds);
 
 my $files = generate_filelist(\%cmds);
 if($cmds{"print"})
-{ print_filelist($files); }
-else
-{ write_filelist($files, $cmds{"output"}); }
-
-sub cmd_parser
 {
+	print_filelist($files);
+} else
+{
+	write_filelist($files, $cmds{"output"});
+}
+
+sub cmd_parser {
   my $work = ".";
   my %hash = ();
   my %uncover = ();
@@ -78,23 +79,22 @@ sub cmd_parser
   $with_help       = ($with_help       == 0  ? $FALSE     : $TRUE  );
   
   # if uncover has file passed, decode this file and add them to @uncover
-  foreach my $dir (sort{$a cmp $b} keys %hash)
-  {
-    if(-f $dir)
-    {
+  foreach my $dir (sort{$a cmp $b} keys %hash) {
+    if(-f $dir) {
       open my $fin, "<", $dir or die "$dir is read wrong!";
-      while(<$fin>)
-      {
+      while(<$fin>) {
         $_ =~ s/\r?\n//g;
         if(($_ ne "") && (!exists($uncover{$_})))
-        { $uncover{$_} = 0; }
+        {
+					$uncover{$_} = 0;
+				}
       }
       close($fin);
-    }
-    elsif($dir ne "")
-    {
+    } elsif($dir ne "") {
       if(!exists($uncover{$dir}))
-      { $uncover{$dir} = 0; }
+      {
+				$uncover{$dir} = 0;
+			}
     }
   }
   
@@ -114,8 +114,7 @@ sub cmd_parser
   return \%cmds;
 }
 
-sub cmd_print
-{
+sub cmd_print {
   my ($cmds) = @_;
   print("CONFIGURATIONS ARE : \n");
   print("work            => ", $cmds{"work"}, "\n");
@@ -130,8 +129,7 @@ sub cmd_print
   print("with_help       => ", $cmds{"with_help"} == 0 ? "FALSE" : "TRUE","\n\n");
 }
 
-sub help_print
-{
+sub help_print {
   print("INTRODUCTION of $0:\n");
   print("$0 supports (system) verilog project\n");
   print(" " x length($0), " is designed to generate file list\n\n");
@@ -152,21 +150,44 @@ sub help_print
   print("$0 -w ../.. -d => work directory is ../.., filelist with definitions\n\n");
 }
 
+sub read_file {
+	my ($file) = @_;
+  open my $fin, "<", $file or die "$file does not exists!";
+	my $context = <$fin>;
+  close($fin);
+	$context =~ s/\/\*(.*?)\*\///g;
+	my @lines = split(/\r?\n/, $context);
+
+	return \@lines;
+}
+
+sub judge_line_is_space {
+	my ($line) = @_;
+	my $flag = $TRUE;
+	if($flag ne "") {
+		foreach my $ch ($line) {
+			if (($ch ne " ") && ($ch ne "\t") && ($ch ne "\r")) {
+				$flag = $FALSE;
+				last;
+			}
+		}
+	}
+
+	return $flag;
+}
+
 # used to judge whether a system verilog/verilog file
 # has a module defined or not
-sub judge_file_is_module
-{
+sub judge_file_is_module {
   my ($file) = @_;
   my $flag = $FALSE;
-  open my $fin, "<", $file or die "$file does not exists!";
-  while(<$fin>)
-  {
-    $_ =~ s/\r?\n$//g;
-    $_ =~ s/^([\s\t]*)//g;
-    if($_ =~ /^module[\s\t]/)
-    { $flag = $TRUE; last; }
+	my @lines = read_file($file);
+  foreach my $line (@lines) {
+    if($line =~ /\wmodule\w/) {
+			$flag = $TRUE;
+			last;
+		}
   }
-  close($fin);
   
   return $flag;
 }
@@ -174,102 +195,86 @@ sub judge_file_is_module
 # used to judge whether a system verilog/verilog file 
 # only has macro definitions, parameters and annotation 
 # defined or not
-sub judge_file_is_definition
-{
+sub judge_file_is_definition {
   my ($file) = @_;
   my $flag = $TRUE;
-  open my $fin, "<", $file or die "$file does not exists!";
-  while(<$fin>)
-  {
-    $_ =~ s/\r?\n$//g;
-    $_ =~ s/^([\s\t]*)//g;
-    if(($_ !~ /^`define[\s\t]/) && ($_ !~ /^parameter[\s\t]/) && ($_ !~ /^localparam[\s\t]/)
-     && ($_ !~ /^defparam[\s\t]/) && ($_ !~ /^specparam[\s\t]/) && ($_ !~ /^\/\//) && ($_ ne ""))
-    { $flag = $FALSE; last; }
+	my @lines = read_file($file);
+  foreach my $line (@lines) {
+    if(($line !~ /\w`define|`ifdef|`else|`elif|`endif|parameter|localparam|specparam\w/) && judge_line_is_space($line))
+    {
+			$flag = $FALSE;
+			last;
+		}
   }
-  close($fin);
   
   return $flag;
 }
 
 # used to judge whether a system verilog/verilog file 
 # has class defined or not
-sub judge_file_is_class
-{
+sub judge_file_is_class {
   my ($file) = @_;
   my $flag = $FALSE;
-  open my $fin, "<", $file or die "$file does not exists!";
-  while(<$fin>)
-  {
-    $_ =~ s/\r?\n$//g;
-    $_ =~ s/^([\s\t]*)//g;
-    if($_ =~ /^class[\s\t]/)
-    { $flag = $TRUE; last; }
+	my @lines = read_file($file);
+  foreach my $line (@lines) {
+    if($line =~ /\wclass\w/) {
+			$flag = $TRUE;
+			last;
+		}
   }
-  close($fin);
   
   return $flag;
 }
 
 # used to judge whether a system verilog/verilog file 
 # has a task defined or not
-sub judge_file_is_task
-{
+sub judge_file_is_task {
   my ($file) = @_;
   my $flag = $FALSE;
-  open my $fin, "<", $file or die "$file does not exists!";
-  while(<$fin>)
-  {
-    $_ =~ s/\r?\n$//g;
-    $_ =~ s/^([\s\t]*)//g;
-    if($_ =~ /^task[\s\t]/)
-    { $flag = $TRUE; last; }
+	my @lines = read_file($file);
+  foreach my $line (@lines) {
+    if($line =~ /\wtask\w/) {
+			$flag = $TRUE;
+			last;
+		}
   }
-  close($fin);
   
   return $flag;
 }
 
 # used to judge whether a system verilog/verilog file 
 # has a function defined or not
-sub judge_file_is_function
-{
+sub judge_file_is_function {
   my ($file) = @_;
   my $flag = $FALSE;
-  open my $fin, "<", $file or die "$file does not exists!";
-  while(<$fin>)
-  {
-    $_ =~ s/\r?\n$//g;
-    $_ =~ s/^([\s\t]*)//g;
-    if($_ =~ /^function[\s\t]/)
-    { $flag = $TRUE; last; }
+	my @lines = read_file($file);
+  foreach my $line (@lines) {
+    if($line =~ /\wfunction\w/) {
+			$flag = $TRUE;
+			last;
+		}
   }
-  close($fin);
   
   return $flag;
 }
 
 # used to judge whether a system verilog/verilog file 
 # has class defined or not
-sub judge_file_is_interface
-{
+sub judge_file_is_interface {
   my ($file) = @_;
   my $flag = $FALSE;
-  open my $fin, "<", $file or die "$file does not exists!";
-  while(<$fin>)
-  {
-    $_ =~ s/\r?\n$//g;
-    $_ =~ s/^([\s\t]*)//g;
-    if($_ =~ /^interface[\s\t]/)
-    { $flag = $TRUE; last; }
+	my @lines = read_file($file);
+  foreach my $line (@lines) {
+    if($line =~ /\winterface\w/) {
+			$flag = $TRUE;
+			last;
+		}
   }
-  close($fin);
   
   return $flag;
 }
 
-sub walk_dir
-{
+sub walk_dir {
   my ($cmds, $hash, $dir) = @_;
   
   my %uncover         = %{$$cmds{"uncover"}     };
@@ -281,27 +286,23 @@ sub walk_dir
   my $with_help       = $$cmds{"with_help"      };
   
   # absolute path
-  if(exists($uncover{$dir}))
-  { return; }
+  if(exists($uncover{$dir})) {
+		return;
+	}
   
   opendir (my $din, $dir) or die "$dir does not exists";
   my @subdirs = readdir($din);
   closedir($din);
   my @dirs = ();
-  foreach my $subdir (@subdirs)
-  {
+  foreach my $subdir (@subdirs) {
     # relative path
-    if(($subdir !~ /^\./) && (!exists($uncover{$subdir})))
-    {
+    if(($subdir !~ /^\./) && (!exists($uncover{$subdir}))) {
       my $path = File::Spec->catdir($dir, $subdir);
-      if(-d $path)
-      { push(@dirs, $path); }
-      elsif((-f $path) && ($path =~ /\.s?v$/))
-      {
-        if(!exists($$hash{$dir}))
-        {
-          $$hash{$dir} = 
-          {
+      if(-d $path) {
+				push(@dirs, $path);
+			} elsif((-f $path) && ($path =~ /\.s?vh?$/)) {
+        if(!exists($$hash{$dir})) {
+          $$hash{$dir} = {
             "incdir"     => $FALSE,
             "module"     => [],
             "definition" => [],
@@ -311,67 +312,48 @@ sub walk_dir
             "interface"  => [],
           };
         }
-        if(judge_file_is_module($path))
-        { push(@{$$hash{$dir}{"module"}}, $subdir); }
-        elsif(judge_file_is_definition($path))
-        {
-          if($with_definition)
-          { push(@{$$hash{$dir}{"definition"}}, $subdir); }
-          else
-          {
-            if($FALSE == $$hash{$dir}{"incdir"})
-            { $$hash{$dir}{"incdir"} = $TRUE; }
+        if(judge_file_is_module($path)) {
+					push(@{$$hash{$dir}{"module"}}, $subdir);
+				} elsif(judge_file_is_definition($path)) {
+          if($with_definition) {
+						push(@{$$hash{$dir}{"definition"}}, $subdir);
+					} elsif($FALSE == $$hash{$dir}{"incdir"}) {
+						$$hash{$dir}{"incdir"} = $TRUE;
           }
-        }
-        elsif(judge_file_is_class($path))
-        {
-          if($with_class)
-          { push(@{$$hash{$dir}{"class"}}, $subdir); }
-          else
-          {
-            if($FALSE == $$hash{$dir}{"incdir"})
-            { $$hash{$dir}{"incdir"} = $TRUE; }
+				} elsif(judge_file_is_class($path)) {
+          if($with_class) {
+						push(@{$$hash{$dir}{"class"}}, $subdir);
+					} elsif($FALSE == $$hash{$dir}{"incdir"}) {
+						$$hash{$dir}{"incdir"} = $TRUE;
+					}
+        } elsif(judge_file_is_task($path)) {
+          if($with_task) {
+						push(@{$$hash{$dir}{"task"}}, $subdir);
+					} elsif($FALSE == $$hash{$dir}{"incdir"}) {
+						$$hash{$dir}{"incdir"} = $TRUE;
           }
-        }
-        elsif(judge_file_is_task($path))
-        {
-          if($with_task)
-          { push(@{$$hash{$dir}{"task"}}, $subdir); }
-          else
-          {
-            if($FALSE == $$hash{$dir}{"incdir"})
-            { $$hash{$dir}{"incdir"} = $TRUE; }
+        } elsif(judge_file_is_function($path)) {
+          if($with_function) {
+						push(@{$$hash{$dir}{"function"}}, $subdir);
+					} elsif($FALSE == $$hash{$dir}{"incdir"}) {
+						$$hash{$dir}{"incdir"} = $TRUE;
           }
-        }
-        elsif(judge_file_is_function($path))
-        {
-          if($with_function)
-          { push(@{$$hash{$dir}{"function"}}, $subdir); }
-          else
-          {
-            if($FALSE == $$hash{$dir}{"incdir"})
-            { $$hash{$dir}{"incdir"} = $TRUE; }
-          }
-        }
-        elsif(judge_file_is_interface($path))
-        {
-          if($with_interface)
-          { push(@{$$hash{$dir}{"interface"}}, $subdir); }
-          else
-          {
-            if($FALSE == $$hash{$dir}{"incdir"})
-            { $$hash{$dir}{"incdir"} = $TRUE; }
+        } elsif(judge_file_is_interface($path)) {
+          if($with_interface) {
+						push(@{$$hash{$dir}{"interface"}}, $subdir);
+					} elsif($FALSE == $$hash{$dir}{"incdir"}) {
+            $$hash{$dir}{"incdir"} = $TRUE;
           }
         }
       }
     }
   }
-  foreach my $path (@dirs)
-  { walk_dir($cmds, $hash, $path); }
+  foreach my $path (@dirs) {
+		walk_dir($cmds, $hash, $path);
+	}
 }
 
-sub generate_filelist
-{
+sub generate_filelist {
   my ($cmds) = @_;
   my $work = $$cmds{"work"};
   my %hash = ();
@@ -380,48 +362,40 @@ sub generate_filelist
   return \%hash;
 }
 
-sub write_filelist
-{
+sub write_filelist {
   my ($hash, $file) = @_;
-  if(!defined($hash) || !%{$hash})
-  {
+  if(!defined($hash) || !%{$hash}) {
     print("no file is selected in $file\n");
     exit(-1);
   }
   print("write file list in FILE $file:\n");
   open my $fout, ">", $file or die "$file cannnot be written";
-  foreach my $path (sort{$a cmp $b} keys %{$hash})
-  {
+  foreach my $path (sort{$a cmp $b} keys %{$hash}) {
     print $fout "\n// $path\n";
-    if($$hash{$path}{"incdir"} == $TRUE)
-    { print $fout "+incdir+$path\n"; }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"definition"}})
-    {
+    if($$hash{$path}{"incdir"} == $TRUE) {
+			print $fout "+incdir+$path\n";
+		}
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"definition"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print $fout "$tmp\n";
     }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"module"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"module"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print $fout "$tmp\n";
     }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"class"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"class"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print $fout "$tmp\n";
     }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"task"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"task"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print $fout "$tmp\n";
     }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"function"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"function"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print $fout "$tmp\n";
     }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"interface"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"interface"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print $fout "$tmp\n";
     }
@@ -430,47 +404,38 @@ sub write_filelist
   print("writing done!\n");
 }
 
-sub print_filelist
-{
+sub print_filelist {
   my ($hash) = @_;
-  if(!defined($hash) || !%{$hash})
-  {
+  if(!defined($hash) || !%{$hash}) {
     print("no file is selected\n");
     exit(-1);
   }
   print("print file list to TERMINAL\n\n");
-  foreach my $path (sort{$a cmp $b} keys %{$hash})
-  {
+  foreach my $path (sort{$a cmp $b} keys %{$hash}) {
     print("\n// $path\n");
     if($$hash{$path}{"incdir"} == $TRUE)
     { print("+incdir+$path\n"); }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"definition"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"definition"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print("$tmp\n");
     }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"module"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"module"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print("$tmp\n");
     }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"class"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"class"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print("$tmp\n");
     }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"task"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"task"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print("$tmp\n");
     }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"function"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"function"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print("$tmp\n");
     }
-    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"interface"}})
-    {
+    foreach my $subpath (sort{$a cmp $b} @{$$hash{$path}{"interface"}}) {
       my $tmp = File::Spec->catfile($path, $subpath);
       print("$tmp\n");
     }

@@ -8,7 +8,7 @@ import os
 import re
 import argparse
 
-def replace_word_nore(file, source, target):
+def replace_word_nonre(file, source, target):
   flag = False
   lines = None
   with open(file, "r") as fin:
@@ -51,7 +51,7 @@ def walk_dir(path, source, target, log, ext, replace_func):
         walk_dir(subpath, source, target, log, ext, replace_func)
 
 def replace_file_in_dir(args):
-  func = replace_word_re if args.re else replace_word_nore
+  func = replace_word_re if args.re else replace_word_nonre
   walk_dir(args.dict, args.source, args.target, args.log, args.ext, func)
 
 

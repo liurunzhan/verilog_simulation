@@ -6,6 +6,8 @@
   * date : ${date}
   */
 
+
 initial begin
     $$display("test CASE ${case}");
+		$$finish;
 end
