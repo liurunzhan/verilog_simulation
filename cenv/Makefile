@@ -21,9 +21,9 @@ VENDOR = none
 OS = eabi
 TOOL_VERSION = $(TOOL_DIR)$(ARCH)-$(VENDOR)-$(OS)
 
-CC = $(TOOL_VERSION)-gcc
-OBJDUMP = $(TOOL_VERSION)-objdump
-OBJCOPY = $(TOOL_VERSION)-objcopy
+CC ?= $(TOOL_VERSION)-gcc
+OBJDUMP ?= $(TOOL_VERSION)-objdump
+OBJCOPY ?= $(TOOL_VERSION)-objcopy
 
 # CC configuration
 LEVEL = 0

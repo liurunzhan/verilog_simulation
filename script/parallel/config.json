@@ -1,0 +1,6 @@
+{
+	"PLATFORM" : {
+		"MAX_THREADS" : 4,
+		"MAX_HOURS" : 24
+	}
+}
