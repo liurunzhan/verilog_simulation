@@ -64,12 +64,12 @@ def argument_parse():
   parser.add_argument("--re", action="store_true", help="with regular expression")
   parser.add_argument("--log", action="store_true", help="with log output")
   parser.set_defaults(func=replace_file_in_dir)
-  
+  def func(args):
+    pass
+  parser.set_defaults(func=func)
   return parser
 
 
 if __name__ == "__main__":
   args = argument_parse()
-  print("script configuration")
-  print(args)
   args.func(args)

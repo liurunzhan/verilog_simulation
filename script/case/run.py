@@ -9,11 +9,11 @@ from string import Template
 
 case_path = [
   "software/",
-  "software/main_def.c",
+  "software/main_tmpl.c",
   "user_def.v"
 ]
 
-main_def = """/**
+main_tmpl = """/**
   * case : ${case}
   * func : ${description}
   * proj : ${project}
@@ -103,7 +103,7 @@ def create_case(args):
       tfile = os.path.join(".", paths[-1])
       if paths[-1] == args.template_c:
         print("generate FILE %s" % path)
-        template = read_template_from_file(tfile, main_def, hash)
+        template = read_template_from_file(tfile, main_tmpl, hash)
         with open(path, "w") as fout:
           fout.write(template)
       elif paths[-1] == args.template_v:
@@ -196,7 +196,7 @@ def add_subparser_args_case(subparsers, cmd, help, func=undefined_function):
   # add optional argument to subparser
   parser.add_argument("--template",    action="store", type=str, default="case.path",   help="verilog template file")
   parser.add_argument("--template-v",  action="store", type=str, default="user_def.v",  help="verilog template file")
-  parser.add_argument("--template-c",  action="store", type=str, default="main_def.c",  help="c template file")
+  parser.add_argument("--template-c",  action="store", type=str, default="main_tmpl.c",  help="c template file")
   parser.set_defaults(func=func)
   
   return parser

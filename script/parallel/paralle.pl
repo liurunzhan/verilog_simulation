@@ -12,7 +12,7 @@ my $CONFIG_PLATFORM = "PLATFORM";
 
 sub items_from_ini {
   my ($file) = @_;
-	items = {}
+	my %items = ();
 	try:
 		conf = configparser.ConfigParser()
 		conf.read(file)
@@ -29,7 +29,7 @@ sub items_from_ini {
 
 sub items_from_json {
   my ($file) = @_;
-	items = {}
+	my %items = ();
 	with open(file, "r") as fin:
 		data = json.load(fin)[CONFIG_PLATFORM]
 		for key in data:
@@ -41,7 +41,7 @@ sub items_from_file {
   my ($file) = @_;
 	if not os.path.exists(file):
 		return {}
-	my %items = {}
+	my %items = ();
 	basename = os.path.basename(file)
 	if basename.endswith(".json"):
 		items = items_from_json(file)
@@ -49,7 +49,7 @@ sub items_from_file {
 		items = items_from_ini(file)
 	else:
 		
-	return \%items
+	return \%items;
 }
 
 sub run_commands {

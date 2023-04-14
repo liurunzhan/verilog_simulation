@@ -1,3 +1,3 @@
 # verilog_simulation
 ___
-The Verilog/System Verilog Simulation Environment.
+The Verilog/System Verilog/SoC Simulation Environment.

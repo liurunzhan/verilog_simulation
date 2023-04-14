@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 
-# self-built modules
-import json
-import configparser
-import os
+# standard libraries
+from json import load
+from configparser import ConfigParser
+from os.path import exists, basename
 import argparse
 
 CONFIG_PLATFORM = "PLATFORM"
@@ -11,7 +11,7 @@ CONFIG_PLATFORM = "PLATFORM"
 def items_from_ini(file):
 	items = {}
 	try:
-		conf = configparser.ConfigParser()
+		conf = ConfigParser()
 		conf.read(file)
 		data = conf.items(CONFIG_PLATFORM)
 		for i in range(len(data)):
@@ -26,19 +26,19 @@ def items_from_ini(file):
 def items_from_json(file):
 	items = {}
 	with open(file, "r") as fin:
-		data = json.load(fin)[CONFIG_PLATFORM]
+		data = load(fin)[CONFIG_PLATFORM]
 		for key in data:
 			items[key] = data[key]
 	return items
 
 def items_from_file(file):
-	if not os.path.exists(file):
+	if not exists(file):
 		return {}
 	items = None
-	basename = os.path.basename(file)
-	if basename.endswith(".json"):
+	name = basename(file)
+	if name.endswith(".json"):
 		items = items_from_json(file)
-	elif basename.endswith(".ini"):
+	elif name.endswith(".ini"):
 		items = items_from_ini(file)
 	else:
 		items = {}
