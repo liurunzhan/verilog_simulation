@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-import sys
-import os
-import time
-import argparse
-import shutil
+from sys import argv
+from sys import exit as sys_exit
+from os import system, popen, makedirs, listdir
+from os.path import exists, join, isdir
+from time import strftime, localtime
+from argparse import ArgumentParser
+from shutil import rmtree
 from string import Template
 
 case_path = [
@@ -47,7 +49,7 @@ end
 
 def detect_software(software):
   exists = False
-  with os.popen("%s --version" % software) as pin:
+  with popen("%s --version" % software) as pin:
     if pin.read():
       exists = True
   
@@ -59,7 +61,7 @@ def undefined_function(arguments):
 def read_template_from_file(file, default, hash):
   string = None
   template = None
-  if os.path.exists(file):
+  if exists(file):
     with open(file, "r") as fin:
       string = fin.read()
   else:
@@ -84,23 +86,23 @@ def create_case(args):
   print("create CASE %s by template file" % args.case)
   hash = exchange_args_to_dict(args)
   lines = None
-  if os.path.exists(args.template):
+  if exists(args.template):
     with open(args.template, "r") as fin:
       lines = fin.readlines()
   else:
     lines = case_path
   for line in lines:
     line = line.replace("\r", "").replace("\n", "")
-    path = os.path.join(args.root, args.case, line)
+    path = join(args.root, args.case, line)
     if line[0] == "#" or " " in line:
       continue
     if line[-1] == "/":
-      if not os.path.exists(path):
+      if not exists(path):
         print("create SUBDIRECTORY %s" % path)
-        os.makedirs(path)
+        makedirs(path)
     else:
       paths = line.split("/")
-      tfile = os.path.join(".", paths[-1])
+      tfile = join(".", paths[-1])
       if paths[-1] == args.template_c:
         print("generate FILE %s" % path)
         template = read_template_from_file(tfile, main_tmpl, hash)
@@ -114,16 +116,16 @@ def create_case(args):
 
 def delete_case(args):
   print("delete CASE %s" % args.case)
-  path = os.path.join(args.root, args.case)
-  if os.path.exists(path):
-    shutil.rmtree(path)
+  path = join(args.root, args.case)
+  if exists(path):
+    rmtree(path)
 
 def delete_subdirs(path, dir_name):
-  for dir in os.listdir(path):
-    subpath = os.path.join(path, dir)
-    if os.path.isdir(subpath):
+  for dir in listdir(path):
+    subpath = join(path, dir)
+    if isdir(subpath):
       if dir == dir_name:
-        shutil.rmtree(subpath)
+        rmtree(subpath)
       else:
         delete_subdirs(subpath, dir_name)
 
@@ -133,23 +135,23 @@ def delete_svn_from_dir(args):
 
 def delete_svn_from_case(args):
   print("delete .svn from CASE %s" % args.case)
-  path = os.path.join(args.root, args.case)
+  path = join(args.root, args.case)
   delete_subdirs(path, ".svn")
 
 def add_case_to_svn(args):
   print("add case to local svn repository")
-  path = os.path.join(args.root, args.case)
-  os.system("svn add %s" % path)
+  path = join(args.root, args.case)
+  system("svn add %s" % path)
 
 def delete_case_from_svn(args):
   print("delete case from local svn repository")
-  path = os.path.join(args.root, args.case)
-  os.system("svn del %s" % path)
+  path = join(args.root, args.case)
+  system("svn del %s" % path)
 
 def commit_case_to_svn(args):
   print("commit case to remote svn repository")
-  path = os.path.join(args.root, args.case)
-  os.system("svn ci %s -m \"commit case %s to svn\"" % (path, args.case))
+  path = join(args.root, args.case)
+  system("svn ci %s -m \"commit case %s to svn\"" % (path, args.case))
 
 def delete_git_from_dir(args):
   print("delete .git from SUBDIRECTORY %s" % args.dir)
@@ -157,26 +159,26 @@ def delete_git_from_dir(args):
 
 def delete_git_from_case(args):
   print("delete .git from CASE %s" % args.case)
-  path = os.path.join(args.root, args.case)
+  path = join(args.root, args.case)
   delete_subdirs(path, ".git")
 
 def add_case_to_git(args):
   print("add case to local git repository")
-  path = os.path.join(args.root, args.case)
-  os.system("git add %s" % path)
+  path = join(args.root, args.case)
+  system("git add %s" % path)
 
 def delete_case_from_git(args):
   print("delete case from local git repository")
-  path = os.path.join(args.root, args.case)
-  os.system("svn del %s" % path)
+  path = join(args.root, args.case)
+  system("svn del %s" % path)
 
 def commit_case_to_git(args):
   print("commit case to remote git repository")
-  path = os.path.join(args.root, args.case)
-  os.system("git commit %s -m \"commit case %s to svn\"" % (path, args.case))
+  path = join(args.root, args.case)
+  system("git commit %s -m \"commit case %s to svn\"" % (path, args.case))
 
 def add_subparser_args_case(subparsers, cmd, help, func=undefined_function):
-  current_date = time.strftime("%Y-%m-%d", time.localtime())
+  current_date = strftime("%Y-%m-%d", localtime())
   
   # add subparser to subparsers
   parser = subparsers.add_parser(cmd, help=help)
@@ -209,7 +211,7 @@ def add_subparser_args_sdir(subparsers, cmd, help, func):
   return parser
 
 def parse_cmd_arguments():
-  parser = argparse.ArgumentParser(description="manage cases in project")
+  parser = ArgumentParser(description="manage cases in project")
   subparsers = parser.add_subparsers()
   add_subparser_args_case(subparsers, cmd="create",     help="create case from template"               , func=create_case)
   add_subparser_args_case(subparsers, cmd="delete",     help="delete case from a given path"           , func=delete_case)
@@ -227,10 +229,10 @@ def parse_cmd_arguments():
   return parser.parse_args()
 
 if __name__ == "__main__":
-  if len(sys.argv) == 1:
+  if len(argv) == 1:
     print("no command line argument is given")
-    print("use following command to get usage of %s" % sys.argv[0])
-    print("%s --help" % sys.argv[0])
-    sys.exit(-1)
+    print("use following command to get usage of %s" % argv[0])
+    print("%s --help" % argv[0])
+    sys_exit(-1)
   arguments = parse_cmd_arguments()
   arguments.func(arguments)

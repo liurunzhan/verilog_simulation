@@ -1,10 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # standard libraries
 from json import load
 from configparser import ConfigParser
 from os.path import exists, basename
-import argparse
+from argparse import ArgumentParser
 
 CONFIG_PLATFORM = "PLATFORM"
 

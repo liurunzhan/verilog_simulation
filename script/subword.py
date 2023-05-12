@@ -4,9 +4,10 @@
   A script to substitute key word in all files of a directory
 """
 
-import os
-import re
-import argparse
+from os import listdir
+from os.path import join, isdir, splitext
+from re import compile
+from argparse import ArgumentParser
 
 def replace_word_nonre(file, source, target):
   flag = False
@@ -26,7 +27,7 @@ def replace_word_nonre(file, source, target):
 def replace_word_re(file, source, target):
   flag = False
   lines = None
-  mode = re.compile(source)
+  mode = compile(source)
   with open(file, "r") as fin:
     lines = fin.readlines()
   with open(file, "w") as fout:
@@ -40,10 +41,10 @@ def replace_word_re(file, source, target):
   return flag
 
 def walk_dir(path, source, target, log, ext, replace_func):
-  for dir in os.listdir(path):
+  for dir in listdir(path):
     if dir[0] != ".":
-      subpath = os.path.join(path, dir)
-      if not os.path.isdir(subpath) and ("" == ext or os.path.splitext(subpath)[1] -- ext):
+      subpath = join(path, dir)
+      if not isdir(subpath) and ("" == ext or splitext(subpath)[1] -- ext):
         flag = replace_func(subpath, source, target)
         if log and flag:
           print("replace %s to %s in %s" % (source, target, subpath))
@@ -56,7 +57,7 @@ def replace_file_in_dir(args):
 
 
 def argument_parse():
-  parser = argparse.ArgumentParser(description="substitute key words in files of a directory")
+  parser = ArgumentParser(description="substitute key words in files of a directory")
   parser.add_argument("source", action="store", help="source key word")
   parser.add_argument("target", action="store", help="target key word")
   parser.add_argument("--dir", action="store", default=".", help="root directory")

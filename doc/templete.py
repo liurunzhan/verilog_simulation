@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 """
   以下所有模块都是python内置的标准模块，无需另外安装

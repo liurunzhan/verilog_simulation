@@ -1,24 +1,15 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
+# import standard libraries
 from os import scandir, DirEntry
-from os.path import exists, isdir, isfile, basename, dirname
+from os.path import exists, isdir, isfile, basename, dirname, join
 from fnmatch import fnmatch
 from pathlib import PurePath
-try:
-  from collections.abc import Iterable
-except ImportError:
-  from collections import Iterable
 
-def flatten(items):
-  for item in items:
-    if isinstance(item, Iterable) and not isinstance(item, str):
-      for subitem in flatten(item):
-        yield subitem
-    else:
-      yield item
-
-def extend(items):
-  return [item for item in flatten(items=items)]
+# import self-defined libraries
+from sys import path
+path.append(join(__file__, ".."))
+from basic_apis import flatten
 
 def ptmatch(item, pattern):
   return PurePath(item).match(pattern) or (isfile(item) and PurePath(dirname(item)).match(pattern))
